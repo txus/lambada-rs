@@ -1,0 +1,7 @@
+[package]
+name = "lambada"
+version = "0.1.0"
+authors = ["Txus <me@txus.io>"]
+
+[dependencies]
+nom = "*"
