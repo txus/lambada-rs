@@ -4,5 +4,5 @@ pub enum AST {
     Sexp(Vec<AST>),
     Symbol(String),
     Integer(i32),
-    String(String)
+    String(String),
 }
