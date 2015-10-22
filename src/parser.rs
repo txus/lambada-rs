@@ -1,4 +1,4 @@
-use nom::{alphanumeric, multispace, digit};
+use nom::{multispace, digit};
 use nom::{Needed, Err};
 use nom::IResult::*;
 
@@ -54,7 +54,7 @@ named!(literal<AST>, alt!(number | string));
 named!(form<AST>, alt!(literal | symbol | sexp));
 
 named!(symbol<AST>,
-       map!(map_res!(map!(alphanumeric, Vec::from),
+       map!(map_res!(map!(is_not!("\" ()\r\n"), Vec::from),
                      String::from_utf8),
             AST::Symbol));
 
@@ -168,6 +168,11 @@ mod tests {
                 AST::Integer(2),
                 AST::Sexp(list![AST::Sexp(list![AST::Symbol("quux".to_owned())])])]),
                        program(&b" (foo bar baz)\n bar \n2 \n ((quux))"[..]));
+
+        assert_parses!(AST::Program(list![AST::Sexp(list![AST::Symbol("+".to_owned()),
+                                                          AST::Symbol("a".to_owned()),
+                                                          AST::Symbol("b".to_owned())])]),
+                       program(&b"(+ a b)"[..]));
     }
 
     #[test]
