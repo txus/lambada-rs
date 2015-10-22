@@ -2,24 +2,42 @@ use nom::{alphanumeric, multispace, digit};
 use nom::{Needed, Err};
 use nom::IResult::*;
 
+use cons_list::ConsList;
+use std::iter::FromIterator;
+
 use std::str;
 use std::str::FromStr;
 use std::result::Result;
 
 use ast::AST;
 
-named!(program<AST>,
-       map!(delimited!(
-           opt!(multispace),
-           many0!(delimited!(opt!(multispace), form, opt!(multispace))),
-           opt!(multispace)),
-            AST::Program));
+macro_rules! list {
+    ( $( $x:expr ),* ) => {
+        {
+            use cons_list::ConsList;
+            use std::iter::FromIterator;
+            let mut temp_vec = vec![];
+            $(
+                temp_vec.push($x);
+             )*
+            ConsList::from_iter(temp_vec.iter().rev().map(|a| a.clone()))
+        }
+    };
+}
 
-named!(sexp<AST>, map!(delimited!(
+named!(program<AST>,
+       map!(
+           map!(delimited!(
+               opt!(multispace),
+               many0!(delimited!(opt!(multispace), form, opt!(multispace))),
+               opt!(multispace)),
+                |v: Vec<AST>| ConsList::from_iter(v.iter().rev().map(|x| x.clone()))), AST::Program));
+
+named!(sexp<AST>, map!(map!(delimited!(
     delimited!(opt!(multispace), tag!("("), opt!(multispace)),
     many1!(delimited!(opt!(multispace), form, opt!(multispace))),
     delimited!(opt!(multispace), tag!(")"), opt!(multispace))
-        ), AST::Sexp));
+        ), |v: Vec<AST>| ConsList::from_iter(v.iter().rev().map(|x| x.clone()))), AST::Sexp));
 
 named!(number<AST>,
        map!(map_res!(map_res!(digit,
@@ -45,7 +63,7 @@ pub fn parse(str: String) -> Result<AST, String> {
         Done(_, result) => Ok(result),
         Incomplete(i) => match i {
             Needed::Unknown =>
-                Err("incomplete parsing -- don't know how much data we need".to_string()),
+                Err("incomplete parsing -- don't know how much data we need".to_owned()),
             Needed::Size(size) => Err(format!("incomplete parsing -- needed {} more chars", size)),
         },
         Error(e) => match e {
@@ -111,46 +129,51 @@ mod tests {
 
     #[test]
     fn string_test() {
-        assert_parses!(AST::String("hello".to_string()), string(&b"\"hello\""[..]));
-        assert_parses!(AST::String("hello world".to_string()),
+        assert_parses!(AST::String("hello".to_owned()), string(&b"\"hello\""[..]));
+        assert_parses!(AST::String("hello world".to_owned()),
                        string(&b"\"hello world\""[..]));
     }
 
     #[test]
     fn symbol_test() {
-        assert_parses!(AST::Symbol("hello".to_string()), symbol(&b"hello"[..]));
+        assert_parses!(AST::Symbol("hello".to_owned()), symbol(&b"hello"[..]));
     }
 
     #[test]
     fn sexp_test() {
-        assert_parses!(AST::Sexp(vec![AST::Symbol("foo".to_string()),
-                                      AST::Symbol("bar".to_string()),
-                                      AST::Symbol("baz".to_string())]),
+        assert_parses!(AST::Sexp(list![AST::Symbol("foo".to_owned()),
+                                       AST::Symbol("bar".to_owned()),
+                                       AST::Symbol("baz".to_owned())]),
                        sexp(&b" (     foo bar    baz  )  "[..]));
 
-        assert_parses!(AST::Sexp(vec![AST::Symbol("foo".to_string()),
-                                      AST::Sexp(vec![AST::Symbol("bar".to_string())]),
-                                      AST::Symbol("baz".to_string())]),
+        assert_parses!(AST::Sexp(list![AST::Symbol("foo".to_owned()),
+                                       AST::Sexp(list![AST::Symbol("bar".to_owned())]),
+                                       AST::Symbol("baz".to_owned())]),
                        sexp(&b" (     foo ( bar)    baz  )  "[..]));
+
+        assert_parses!(AST::Sexp(list![AST::Symbol("def".to_owned()),
+                                       AST::Symbol("foo".to_owned()),
+                                       AST::String("bar".to_owned())]),
+                       sexp(&b"(def foo \"bar\")"[..]));
     }
 
     #[test]
     fn program_test() {
-        assert_parses!(AST::Program(vec![
-                AST::Sexp(vec![
-                    AST::Symbol("foo".to_string()),
-                    AST::Symbol("bar".to_string()),
-                    AST::Symbol("baz".to_string())]),
-                AST::Symbol("bar".to_string()),
+        assert_parses!(AST::Program(list![
+                AST::Sexp(list![
+                    AST::Symbol("foo".to_owned()),
+                    AST::Symbol("bar".to_owned()),
+                    AST::Symbol("baz".to_owned())]),
+                AST::Symbol("bar".to_owned()),
                 AST::Integer(2),
-                AST::Sexp(vec![AST::Sexp(vec![AST::Symbol("quux".to_string())])])]),
+                AST::Sexp(list![AST::Sexp(list![AST::Symbol("quux".to_owned())])])]),
                        program(&b" (foo bar baz)\n bar \n2 \n ((quux))"[..]));
     }
 
     #[test]
     fn parse_test() {
-        assert_eq!(Ok(AST::Program(vec![AST::Symbol("foo".to_string())])),
-                   parse("foo".to_string()));
+        assert_eq!(Ok(AST::Program(list![AST::Symbol("foo".to_owned())])),
+                   parse("foo".to_owned()));
     }
 
     #[bench]

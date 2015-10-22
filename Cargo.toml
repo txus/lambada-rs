@@ -5,3 +5,6 @@ authors = ["Txus <me@txus.io>"]
 
 [dependencies]
 nom = "*"
+clippy = "*"
+hamt = "*"
+cons-list = "*"

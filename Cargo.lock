@@ -2,11 +2,37 @@
 name = "lambada"
 version = "0.1.0"
 dependencies = [
+ "clippy 0.0.21 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cons-list 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hamt 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "nom 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
+name = "clippy"
+version = "0.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "unicode-normalization 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "cons-list"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "hamt"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "nom"
 version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "unicode-normalization"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
