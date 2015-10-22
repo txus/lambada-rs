@@ -78,7 +78,7 @@ impl fmt::Display for Value {
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Namespace {
-    name: String,
+    pub name: String,
     bindings: HamtRc<String, Box<Value>>
 }
 

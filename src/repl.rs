@@ -9,11 +9,10 @@ pub fn repl() {
     let mut binding_count = 0;
 
     let mut rl = Editor::new();
-    if let Err(_) = rl.load_history("~/.lambada_history") {
-    }
     println!("lambada 0.1-alpha (press CTRL+D to quit)\n");
+
     loop {
-        let readline = rl.readline("lmbd> ");
+        let readline = rl.readline(&format!("{}> ", ns.name));
         match readline {
             Ok(line) => {
                 let parsed = parse(line.clone()).unwrap();
@@ -44,5 +43,4 @@ pub fn repl() {
             }
         }
     }
-    rl.save_history("~/.lambada_history").unwrap();
 }
