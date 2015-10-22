@@ -13,11 +13,15 @@ extern crate nom;
 
 extern crate hamt;
 extern crate cons_list;
+extern crate rustyline;
 
 mod ast;
 mod parser;
 mod eval;
+mod repl;
+
+use repl::repl;
 
 fn main() {
-    println!("Hello, world!");
+    repl();
 }

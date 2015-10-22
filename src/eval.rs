@@ -3,12 +3,19 @@ use std::boxed::Box;
 use hamt::HamtRc;
 
 use cons_list::ConsList;
+use std::fmt;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Closure {
     parent_env: Environment,
     params: ConsList<AST>,
     code: AST
+}
+
+impl fmt::Display for Closure {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "<function>")
+    }
 }
 
 impl Closure {
@@ -58,6 +65,17 @@ pub enum Value {
     Nil
 }
 
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Value::Integer(ref i) => write!(f, "{}", i),
+            Value::String(ref s) => write!(f, "\"{}\"", &s),
+            Value::Function(ref closure) => write!(f, "{}", &closure),
+            Value::Nil => write!(f, "nil")
+        }
+    }
+}
+
 #[derive(PartialEq, Debug, Clone)]
 pub struct Namespace {
     name: String,
@@ -65,7 +83,7 @@ pub struct Namespace {
 }
 
 impl Namespace {
-    fn new(name: String) -> Namespace {
+    pub fn new(name: String) -> Namespace {
         Namespace {
             name: name.clone(),
             bindings: HamtRc::new()
@@ -93,12 +111,21 @@ impl Environment {
             bindings: bindings
         }
     }
-    fn empty() -> Environment {
+    pub fn empty() -> Environment {
         Environment {
             parent: None,
             bindings: HamtRc::new()
         }
     }
+
+    pub fn define(&self, symbol: String, value: Box<Value>) -> Environment {
+        if let Some(ref p) = self.parent {
+            Environment::new(Some(p.clone()), self.bindings.insert(&symbol, &value))
+        } else {
+            Environment::new(None, self.bindings.insert(&symbol, &value))
+        }
+    }
+
     fn lookup(&self, symbol: &str) -> Option<&Box<Value>> {
         self.bindings.get(symbol)
             .or_else(|| {
@@ -144,7 +171,6 @@ pub fn eval(ns: &mut Namespace, env: &Environment, form: &AST) -> EvalResult {
                 }
             },
             Some(&AST::Symbol(ref s)) if s == "fn" => {
-                print!("({:?} {:?} {:?})", s, list.tail().head(), list.tailn(2));
                 match list.tail().head() {
                     Some(&AST::Sexp(ref args)) => {
                         Ok(Box::new(Value::Function(Closure::new(&env, args.clone(), list.tailn(2)))))
@@ -224,7 +250,6 @@ mod tests {
         ( $expected:expr, $ns:expr, $env:expr, $code:expr) => {
             {
                 let parsed = parse($code.to_owned()).unwrap();
-                println!("{:?}, {:?}", $code.to_owned(), parsed);
                 assert_eq!(Ok(Box::new($expected)), eval($ns, $env, &parsed));
             }
         }
