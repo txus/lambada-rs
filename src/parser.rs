@@ -51,7 +51,11 @@ named!(string<AST>,
 
 named!(literal<AST>, alt!(number | string));
 
-named!(form<AST>, alt!(literal | symbol | sexp));
+named!(quoted<AST>, map!(preceded!(char!('\''), form), |f: AST| AST::Sexp(list![AST::Symbol("quote".to_owned()), f])));
+named!(unquoted<AST>, map!(preceded!(char!('~'), form), |f: AST| AST::Sexp(list![AST::Symbol("unquote".to_owned()), f])));
+named!(unquoted_splicing<AST>, map!(preceded!(tag!("~@"), form), |f: AST| AST::Sexp(list![AST::Symbol("unquote-splicing".to_owned()), f])));
+
+named!(form<AST>, alt!(literal | quoted | unquoted_splicing | unquoted | symbol | sexp));
 
 named!(symbol<AST>,
        map!(map_res!(map!(is_not!("\" ()\r\n"), Vec::from),
@@ -83,7 +87,7 @@ pub fn parse(str: String) -> Result<AST, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{symbol, sexp, number, string, program, parse};
+    use super::{symbol, sexp, number, string, program, parse, quoted, unquoted, unquoted_splicing};
     use ast::AST;
     use nom::{IResult, Needed, Err};
     use nom::IResult::*;
@@ -137,6 +141,24 @@ mod tests {
     #[test]
     fn symbol_test() {
         assert_parses!(AST::Symbol("hello".to_owned()), symbol(&b"hello"[..]));
+    }
+
+    #[test]
+    fn quoted_test() {
+        assert_parses!(AST::Sexp(list![AST::Symbol("quote".to_owned()),
+                                       AST::Symbol("hello".to_owned())]), quoted(&b"'hello"[..]));
+    }
+
+    #[test]
+    fn unquoted_test() {
+        assert_parses!(AST::Sexp(list![AST::Symbol("unquote".to_owned()),
+                                       AST::Symbol("hello".to_owned())]), unquoted(&b"~hello"[..]));
+    }
+
+    #[test]
+    fn unquoted_splicing_test() {
+        assert_parses!(AST::Sexp(list![AST::Symbol("unquote-splicing".to_owned()),
+                                       AST::Symbol("hello".to_owned())]), unquoted_splicing(&b"~@hello"[..]));
     }
 
     #[test]

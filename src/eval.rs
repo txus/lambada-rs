@@ -62,15 +62,17 @@ pub enum Value {
     Integer(i32),
     String(String),
     Function(Closure),
+    Quoted(AST),
     Nil
 }
 
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Value::Integer(ref i) => write!(f, "{}", i),
+            Value::Integer(ref i) => i.fmt(f),
             Value::String(ref s) => write!(f, "\"{}\"", &s),
-            Value::Function(ref closure) => write!(f, "{}", &closure),
+            Value::Function(ref closure) => closure.fmt(f),
+            Value::Quoted(ref ast) => ast.fmt(f),
             Value::Nil => write!(f, "nil")
         }
     }
@@ -176,6 +178,12 @@ pub fn eval(ns: &mut Namespace, env: &Environment, form: &AST) -> EvalResult {
                         Ok(Box::new(Value::Function(Closure::new(&env, args.clone(), list.tailn(2)))))
                     },
                     _ => Err("Usage: (fn (a b) (+ a b))".to_owned())
+                }
+            },
+            Some(&AST::Symbol(ref s)) if s == "quote" => {
+                match list.tail().head() {
+                    Some(ast) => Ok(Box::new(Value::Quoted(ast.clone()))),
+                    _ => Err("Usage: (quote x)".to_owned())
                 }
             },
             Some(&AST::Symbol(ref s)) if s == "+" => {
