@@ -71,14 +71,14 @@ pub fn parse(str: String) -> Result<AST, String> {
             Needed::Size(size) => Err(format!("incomplete parsing -- needed {} more chars", size)),
         },
         Error(e) => match e {
-            Err::Code(code) => Err(format!("parse error -- code {}", code)),
-            Err::Node(code, _) => Err(format!("parse error -- code {}, with more errors", code)),
+            Err::Code(code) => Err(format!("parse error -- code {:?}", code)),
+            Err::Node(code, _) => Err(format!("parse error -- code {:?}, with more errors", code)),
             Err::Position(code, related_input) =>
-                Err(format!("parse error -- code {}, around {:?}",
+                Err(format!("parse error -- code {:?}, around {:?}",
                             code,
                             str::from_utf8(related_input).unwrap())),
             Err::NodePosition(code, related_input, _) =>
-                Err(format!("parse error -- code {}, around {:?}",
+                Err(format!("parse error -- code {:?}, around {:?}",
                             code,
                             str::from_utf8(related_input).unwrap())),
         },
@@ -109,15 +109,15 @@ mod tests {
                     },
                     Error(e) => match e {
                         Err::Code(code) =>
-                            panic!("parse error -- code {}", code),
+                            panic!("parse error -- code {:?}", code),
                         Err::Node(code, _) =>
-                            panic!("parse error -- code {}, with more errors", code),
+                            panic!("parse error -- code {:?}, with more errors", code),
                         Err::Position(code, related_input) =>
-                            panic!("parse error -- code {}, around {:?}",
+                            panic!("parse error -- code {:?}, around {:?}",
                                    code,
                                    str::from_utf8(related_input).unwrap()),
                         Err::NodePosition(code, related_input, _) =>
-                            panic!("parse error -- code {}, around {:?}",
+                            panic!("parse error -- code {:?}, around {:?}",
                                    code,
                                    str::from_utf8(related_input).unwrap())
                     }
