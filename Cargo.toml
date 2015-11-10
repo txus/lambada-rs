@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Txus <me@txus.io>"]
 
 [dependencies]
-nom = "*"
+nom = "~1.0.0"
 clippy = "*"
 hamt = "*"
 cons-list = "*"
